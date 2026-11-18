@@ -16,6 +16,7 @@ import com.example.plantguide.R
 import com.example.plantguide.model.NavItem
 import com.example.plantguide.navigation.Screen
 import com.example.plantguide.ui.components.CustomBottomBar
+import com.example.plantguide.ui.screens.home.HomeScreen
 import com.example.plantguide.ui.theme.PlantGuideTheme
 
 @Composable

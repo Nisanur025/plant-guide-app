@@ -56,4 +56,6 @@ dependencies {
 
     // Jetpack Compose Navigation kütüphanesi
     implementation(libs.androidx.navigation.compose)
+    // Google Fonts
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.12.1")
 }
