@@ -1,18 +1,20 @@
 package com.example.plantguide.ui.screens
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.plantguide.R
 import com.example.plantguide.model.NavItem
+import com.example.plantguide.navigation.Screen
 import com.example.plantguide.ui.components.CustomBottomBar
 import com.example.plantguide.ui.theme.PlantGuideTheme
 
@@ -20,13 +22,26 @@ import com.example.plantguide.ui.theme.PlantGuideTheme
 fun MainScreen() {
 
     val items = listOf(
-        NavItem("Ana Sayfa", R.drawable.ic_home, R.drawable.ic_home),
-        NavItem("Bitkilerim", R.drawable.ic_leaf, R.drawable.ic_leaf),
-        NavItem("Takvim", R.drawable.ic_calendar, R.drawable.ic_calendar),
-        NavItem("Profil", R.drawable.ic_person, R.drawable.ic_person)
+        NavItem("Ana Sayfa", Screen.HomeScreen.route, R.drawable.ic_home, R.drawable.ic_home),
+        NavItem("Bitkilerim", Screen.MyPlantsScreen.route, R.drawable.ic_leaf, R.drawable.ic_leaf),
+        NavItem(
+            "Takvim",
+            Screen.CalendarScreen.route,
+            R.drawable.ic_calendar,
+            R.drawable.ic_calendar
+        ),
+        NavItem("Profil", Screen.ProfileScreen.route, R.drawable.ic_person, R.drawable.ic_person)
     )
 
-    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
+    val navController = rememberNavController()
+
+    // Şu an hangi sayfadayız
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    // Rotaya karşılık gelen sekmenin sırası (hiçbiri değilse -1)
+    val selectedIndex = items.indexOfFirst { it.route == currentRoute }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -34,23 +49,33 @@ fun MainScreen() {
             CustomBottomBar(
                 items = items,
                 selectedIndex = selectedIndex,
-                onItemClick = { selectedIndex = it },
-                onFabClick = { /* asistan sayfasına git */ }
+                onItemClick = { index -> navigateToTab(navController, items[index].route) },
+                onFabClick = { navigateToTab(navController, Screen.AssistantScreen.route) }
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+        NavHost(
+            navController = navController,
+            startDestination = Screen.HomeScreen.route,
+            modifier = Modifier.padding(innerPadding)
         ) {
-            when (selectedIndex) {
-                // 0 -> HomeScreen()
-                // 1 -> MyPlantsScreen()
-                // 2 -> CalendarScreen()
-                // 3 -> ProfileScreen()
-            }
+            composable(Screen.HomeScreen.route) { HomeScreen() }
+            composable(Screen.MyPlantsScreen.route) { MyPlantsScreen() }
+            composable(Screen.AssistantScreen.route) { AssistantScreen() }
+            composable(Screen.CalendarScreen.route) { CalendarScreen() }
+            composable(Screen.ProfileScreen.route) { ProfileScreen() }
         }
+    }
+}
+
+
+private fun navigateToTab(navController: NavController, route: String) {
+    navController.navigate(route) {
+        popUpTo(navController.graph.startDestinationId) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 
