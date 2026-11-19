@@ -47,7 +47,7 @@ fun TodaySection(
                     Text("Bugün için görev yok.", modifier = Modifier.padding(16.dp))
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        state.tasks.forEach { task ->
+                        state.tasks.take(3).forEach { task ->
                             TodoItem(task = task, onToggle = { onToggle(task) })
                         }
                     }
