@@ -11,14 +11,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.plantguide.ui.screens.home.components.CharacterHeight
 import com.example.plantguide.ui.screens.home.components.CharacterOverlap
 import com.example.plantguide.ui.screens.home.components.GardenStatusCard
 import com.example.plantguide.ui.screens.home.components.HomeCharacterSection
 import com.example.plantguide.ui.screens.home.components.HomeHeader
+import com.example.plantguide.ui.screens.home.components.TodaySection
 import com.example.plantguide.ui.theme.PlantGuideTheme
 
 @Composable
@@ -58,6 +62,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 // 2) Karakter ve balon sonra çizilir (kartın üstüne biner)
                 HomeCharacterSection()
             }
+            val viewModel: TodayViewModel = viewModel()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+            TodaySection(
+                state = state,
+                onToggle = viewModel::toggle,
+                onRetry = viewModel::load,
+                onSeeAll = { /* sonra */ }
+            )
         }
     }
 }

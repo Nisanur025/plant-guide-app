@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Gri Arka Plan Dairesi -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M50,0a50,50 0 1,0 100,0a50,50 0 1,0 -100,0z" />
+
+    <!-- Stilize Edilmiş Bitki İkonu -->
+    <group android:scaleX="0.5" android:scaleY="0.5" android:translateX="25" android:translateY="25">
+        <path
+            android:fillColor="#C8E6C9"
+            android:pathData="M50,0C22.4,0,0,22.4,0,50s22.4,50,50,50s50-22.4,50-50S77.6,0,50,0z M79.9,37.4l-7.1,8.4c0,0,4.3-15.1-11.9-21.8c-16.2-6.7-19.5,8.5-19.5,8.5s-0.4-15.8-15.9-16.5c0,0-3.1,15.6,7.1,26.8c0,0-8.5,4.1-9.6,17.8c-1.2,13.6,13.1,14.9,13.1,14.9s17.6,5.1,28.7-9.8c11.1-14.8,9.1-27,9.1-27S76.6,26.5,79.9,37.4z"/>
+    </group>
+
+</vector>

@@ -58,4 +58,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Google Fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.12.1")
+
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 }
