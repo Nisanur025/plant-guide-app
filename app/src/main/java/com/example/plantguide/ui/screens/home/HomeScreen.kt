@@ -64,13 +64,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
 
+                // Top çizim
                 LineArtBackground(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .fillMaxWidth()
                         .height(420.dp)
                 )
-
+                // Karakter ve Kart
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Box(
                         modifier = Modifier
@@ -89,22 +90,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         HomeCharacterSection()
                         LineArtForeground(modifier = Modifier.matchParentSize())
                     }
-                    val viewModel: TodayViewModel = viewModel()
-                    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-                    // Bugünün yapılacakları
-                    TodaySection(
-                        state = state,
-                        onToggle = viewModel::toggle,
-                        onRetry = viewModel::load,
-                        onSeeAll = { /* sonra */ }
-                    )
-
                     // Hızlı Erişim
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 20.dp)
+                            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 16.dp)
                     ){
                         // Başlık
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -161,14 +151,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             )
                         }
                     }
+                    val viewModel: TodayViewModel = viewModel()
+                    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+                    // Bugünün yapılacakları
+                    TodaySection(
+                        state = state,
+                        onToggle = viewModel::toggle,
+                        onRetry = viewModel::load,
+                        onSeeAll = { /* sonra */ }
+                    )
                 }
             }
-
-
-
-
-
-
         }
     }
 }

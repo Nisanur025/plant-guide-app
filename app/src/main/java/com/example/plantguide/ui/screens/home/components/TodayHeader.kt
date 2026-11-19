@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
@@ -23,7 +24,7 @@ import com.example.plantguide.R
 import com.example.plantguide.ui.theme.DarkGreen
 
 @Composable
-fun TodayHeader (onSeeAll :()-> Unit){
+fun TodayHeader(onSeeAll: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -39,7 +40,11 @@ fun TodayHeader (onSeeAll :()-> Unit){
                 tint = Color.DarkGray
             )
             Spacer(Modifier.width(8.dp))
-            Text("Bugünün Yapılacakları", style = MaterialTheme.typography.bodyLarge, color = Color.DarkGray)
+            Text(
+                "Bugünün Yapılacakları",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.DarkGray
+            )
         }
         TextButton(onClick = onSeeAll) {
             Row(
