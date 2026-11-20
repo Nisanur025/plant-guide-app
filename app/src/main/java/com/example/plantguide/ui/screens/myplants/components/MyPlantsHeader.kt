@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.plantguide.R
+import com.example.plantguide.data.FakePlants
 import com.example.plantguide.ui.theme.TextMuted
 
 @Composable
@@ -38,7 +39,7 @@ fun MyPlantsHeader(){
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                "Bahçende 5 bitki bulunuyor",
+                "Bahçende ${FakePlants.size} bitki bulunuyor",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextMuted
             )
