@@ -105,7 +105,7 @@ fun LineArtForeground(modifier: Modifier = Modifier) {
 }
 
 /** Kıvrımlı sap + sapın teğetine göre sağa/sola dönüşümlü dizilen ince yapraklar */
-private fun DrawScope.drawBranch(
+fun DrawScope.drawBranch(
     base: Offset,
     tip: Offset,
     bend: Float,
@@ -163,7 +163,7 @@ private fun DrawScope.drawBranch(
  * İnce, iki ucu sivri, hafif kavisli yaprak + orta damar + yan damarlar.
  * curve: yaprağın yana eğilme miktarı, widthRatio: genişlik/uzunluk oranı
  */
-private fun DrawScope.drawLeaf(
+fun DrawScope.drawLeaf(
     base: Offset,
     angle: Float,
     length: Float,
@@ -380,20 +380,275 @@ fun DrawScope.drawScribbleFlower(
     drawPath(smallFlower, color, style = bold)
 }
 
-/** Noktalardan geçen yumuşak eğri  */
-private fun smoothPath(pts: List<Offset>): Path {
-    val path = Path()
-    path.moveTo(pts[0].x, pts[0].y)
-    for (i in 0 until pts.size - 1) {
-        val p0 = pts[max(i - 1, 0)]
-        val p1 = pts[i]
-        val p2 = pts[i + 1]
-        val p3 = pts[min(i + 2, pts.size - 1)]
-        path.cubicTo(
-            p1.x + (p2.x - p0.x) / 6f, p1.y + (p2.y - p0.y) / 6f,
-            p2.x - (p3.x - p1.x) / 6f, p2.y - (p3.y - p1.y) / 6f,
-            p2.x, p2.y
-        )
+
+
+/**
+ * Orijinal görselin piksel koordinatlarını (x0, y0 başlangıçlı) ekrana ölçekler.
+ * m = moveTo, c = cubicTo, q = quadraticTo (hepsi görsel koordinatıyla yazılır)
+ */
+private class RefBox(
+    val topLeft: Offset,
+    val scale: Float,
+    val x0: Float,
+    val y0: Float
+) {
+    fun p(x: Float, y: Float) = Offset(
+        topLeft.x + (x - x0) * scale,
+        topLeft.y + (y - y0) * scale
+    )
+
+    fun Path.m(x: Float, y: Float) {
+        val a = p(x, y); moveTo(a.x, a.y)
     }
-    return path
+
+    fun Path.c(x1: Float, y1: Float, x2: Float, y2: Float, x: Float, y: Float) {
+        val a = p(x1, y1); val b = p(x2, y2); val e = p(x, y)
+        cubicTo(a.x, a.y, b.x, b.y, e.x, e.y)
+    }
+
+    fun Path.q(x1: Float, y1: Float, x: Float, y: Float) {
+        val a = p(x1, y1); val e = p(x, y)
+        quadraticTo(a.x, a.y, e.x, e.y)
+    }
+}
+
+private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+
+/* ------------------------------------------------------------------ */
+/* 1) LALE – tek çizgi                                                 */
+/* ------------------------------------------------------------------ */
+fun DrawScope.drawTulipLine(
+    topLeft: Offset,
+    height: Float,
+    strokeW: Float,
+    color: Color = Color(0xFF1A1A1A),
+    leafColor: Color? = Color(0xFFB7C4A5)
+) {
+    // Görsel alanı: x 160..365, y 120..540
+    val box = RefBox(topLeft, height / 420f, 160f, 120f)
+    val line = Stroke(strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+    with(box) {
+        // Yaprak dolgusu (isteğe bağlı)
+        if (leafColor != null) {
+            val fill = Path().apply {
+                // sağ yaprak
+                m(365f, 250f)
+                c(310f, 260f, 262f, 300f, 245f, 345f)
+                c(250f, 400f, 258f, 430f, 262f, 450f)
+                c(275f, 435f, 290f, 420f, 300f, 390f)
+                c(320f, 340f, 320f, 290f, 365f, 250f)
+                close()
+                // sol yaprak
+                m(162f, 277f)
+                c(180f, 285f, 220f, 340f, 224f, 400f)
+                c(226f, 440f, 212f, 480f, 208f, 500f)
+                c(185f, 440f, 170f, 340f, 162f, 277f)
+                close()
+            }
+            drawPath(fill, leafColor.copy(alpha = 0.55f))
+        }
+
+        // Çiçek başı
+        val head = Path().apply {
+            // sol dış kenar + alt
+            m(172f, 130f)
+            c(160f, 150f, 165f, 210f, 200f, 238f)
+            c(215f, 248f, 242f, 246f, 247f, 224f)
+            // sağ taç yaprağı yukarı
+            c(252f, 200f, 240f, 150f, 219f, 125f)
+            // sağ taç iç kenarı
+            c(212f, 160f, 218f, 205f, 230f, 238f)
+            // sol taç üst kenarı
+            m(172f, 130f)
+            c(192f, 124f, 218f, 155f, 234f, 195f)
+            c(241f, 214f, 241f, 230f, 230f, 238f)
+        }
+        drawPath(head, color, style = line)
+
+        // Gövde
+        val stem = Path().apply {
+            m(232f, 240f)
+            c(250f, 272f, 252f, 335f, 240f, 400f)
+            c(232f, 440f, 218f, 478f, 208f, 502f)
+        }
+        drawPath(stem, color, style = line)
+
+        // Sol yaprak
+        val leftLeaf = Path().apply {
+            m(162f, 277f)
+            c(180f, 285f, 220f, 340f, 224f, 400f)
+            c(226f, 440f, 212f, 480f, 208f, 500f)
+            m(162f, 277f)
+            c(172f, 340f, 168f, 450f, 190f, 528f)
+        }
+        drawPath(leftLeaf, color, style = line)
+
+        // Sağ yaprak
+        val rightLeaf = Path().apply {
+            m(365f, 250f)
+            c(310f, 260f, 262f, 300f, 245f, 345f)
+            c(238f, 385f, 225f, 455f, 190f, 528f)
+            m(365f, 250f)
+            c(320f, 290f, 320f, 340f, 300f, 390f)
+            c(290f, 420f, 275f, 435f, 262f, 450f)
+        }
+        drawPath(rightLeaf, color, style = line)
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* 2) DALGALI ÇİZGİ + İLMEK + KÜÇÜK ÇİÇEK                              */
+/* ------------------------------------------------------------------ */
+fun DrawScope.drawLoopFlowerWave(
+    topLeft: Offset,
+    height: Float,
+    strokeW: Float,
+    color: Color = Color(0xFF1A1A1A),
+    petalFill: Color? = Color(0xFFCFDABB)
+) {
+    // Görsel alanı: x 0..590, y 240..475
+    val k = height / 235f
+    val box = RefBox(topLeft, k, 0f, 240f)
+    val line = Stroke(strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+    with(box) {
+        // Dalgalı çizgi + ilmek
+        val wave = Path().apply {
+            m(0f, 393f)
+            c(60f, 390f, 110f, 440f, 170f, 432f)
+            c(230f, 424f, 262f, 380f, 305f, 378f)
+            // ilmek
+            c(338f, 375f, 342f, 418f, 318f, 424f)
+            c(294f, 430f, 292f, 386f, 335f, 372f)
+            c(400f, 358f, 460f, 385f, 500f, 410f)
+            // alt kıvrım
+            c(470f, 428f, 440f, 445f, 441f, 471f)
+        }
+        drawPath(wave, color, style = line)
+
+        // Çiçeğe çıkan sap
+        val stem = Path().apply {
+            m(493f, 298f)
+            c(530f, 312f, 548f, 350f, 535f, 388f)
+            c(525f, 400f, 510f, 406f, 500f, 410f)
+        }
+        drawPath(stem, color, style = line)
+
+        // Küçük sivri yaprak
+        val smallLeaf = Path().apply {
+            m(545f, 385f)
+            c(538f, 360f, 548f, 340f, 566f, 334f)
+            c(572f, 356f, 566f, 376f, 545f, 385f)
+        }
+        // Alt yuvarlak yaprak
+        val lowLeaf = Path().apply {
+            m(500f, 410f)
+            c(522f, 372f, 582f, 366f, 576f, 386f)
+            c(570f, 406f, 532f, 404f, 500f, 410f)
+        }
+        if (petalFill != null) {
+            drawPath(smallLeaf, petalFill.copy(alpha = 0.6f))
+            drawPath(lowLeaf, petalFill.copy(alpha = 0.6f))
+        }
+        drawPath(smallLeaf, color, style = line)
+        drawPath(lowLeaf, color, style = line)
+
+        // Çiçek: merkezden çıkan 7 yaprak
+        val center = p(493f, 297f)
+        fun petal(angleDeg: Float, len: Float) {
+            val a = angleDeg * (PI / 180.0).toFloat()
+            val dir = Offset(cos(a), sin(a))
+            val nrm = Offset(-dir.y, dir.x)
+            val l = len * k
+            val w = l * 0.32f
+            val tip = center + dir * l
+            val path = Path().apply {
+                moveTo(center.x, center.y)
+                val c1 = center + dir * (l * 0.25f) + nrm * w
+                val c2 = center + dir * (l * 1.08f) + nrm * (w * 1.1f)
+                cubicTo(c1.x, c1.y, c2.x, c2.y, tip.x, tip.y)
+                val c3 = center + dir * (l * 1.08f) - nrm * (w * 1.1f)
+                val c4 = center + dir * (l * 0.25f) - nrm * w
+                cubicTo(c3.x, c3.y, c4.x, c4.y, center.x, center.y)
+            }
+            if (petalFill != null) drawPath(path, petalFill.copy(alpha = 0.35f))
+            drawPath(path, color, style = Stroke(strokeW * 0.8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
+        petal(-72f, 55f)
+        petal(-134f, 46f)
+        petal(176f, 48f)
+        petal(129f, 48f)
+        petal(105f, 44f)
+        petal(-13f, 54f)
+        petal(12f, 32f)
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* 3) SULU BOYA YAPRAKLI DAL                                           */
+/* ------------------------------------------------------------------ */
+fun DrawScope.drawWatercolorBranch(
+    topLeft: Offset,
+    height: Float,
+    strokeW: Float,
+    color: Color = Color(0xFF4F6B4A),
+    fillColor: Color = Color(0xFF7F9A7A)
+) {
+    // Görsel alanı: x 210..545, y 290..970
+    val box = RefBox(topLeft, height / 680f, 210f, 290f)
+    val line = Stroke(strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+    with(box) {
+        /**
+         * Yaprak: base -> (c1) -> tip -> (c2) -> base.
+         * Sulu boya dolgusu çizgiden biraz kaymış ve daha dar çizilir.
+         */
+        fun leaf(
+            bx: Float, by: Float, tx: Float, ty: Float,
+            c1x: Float, c1y: Float, c2x: Float, c2y: Float,
+            fillDx: Float = 0f, fillDy: Float = 8f
+        ) {
+            // sulu boya dolgusu: iki katman
+            val f1 = Path().apply {
+                m(bx, by)
+                q(lerp(c1x, c2x, 0.22f), lerp(c1y, c2y, 0.22f), tx + fillDx, ty + fillDy)
+                q(lerp(c2x, c1x, 0.22f), lerp(c2y, c1y, 0.22f), bx, by)
+                close()
+            }
+            drawPath(f1, fillColor.copy(alpha = 0.45f))
+            val f2 = Path().apply {
+                m(bx, by)
+                q(lerp(c1x, c2x, 0.40f), lerp(c1y, c2y, 0.40f), tx + fillDx * 0.8f, ty + fillDy * 1.6f)
+                q(lerp(c2x, c1x, 0.40f), lerp(c2y, c1y, 0.40f), bx, by)
+                close()
+            }
+            drawPath(f2, fillColor.copy(alpha = 0.30f))
+
+            // koyu yeşil kontur
+            val outline = Path().apply {
+                m(bx, by)
+                q(c1x, c1y, tx, ty)
+                q(c2x, c2y, bx, by)
+                close()
+            }
+            drawPath(outline, color, style = line)
+        }
+
+        // Yapraklar (alttan üste)
+        leaf(380f, 885f, 212f, 687f, 340f, 660f, 270f, 820f, fillDx = 28f, fillDy = -27f) // sol alt
+        leaf(385f, 890f, 513f, 718f, 411f, 716f, 531f, 796f, fillDx = 8f, fillDy = 25f)   // sağ alt
+        leaf(400f, 740f, 488f, 468f, 365f, 590f, 520f, 610f, fillDx = 50f, fillDy = 18f)  // sağ üst
+        leaf(375f, 670f, 282f, 420f, 220f, 520f, 350f, 540f)                               // sol üst
+        leaf(380f, 660f, 418f, 292f, 295f, 480f, 455f, 470f)                               // tepe
+
+        // Gövde
+        val stem = Path().apply {
+            m(382f, 972f)
+            c(380f, 940f, 376f, 912f, 382f, 885f)
+            c(392f, 830f, 400f, 790f, 400f, 740f)
+            c(398f, 710f, 388f, 685f, 378f, 662f)
+        }
+        drawPath(stem, color, style = line)
+    }
 }
